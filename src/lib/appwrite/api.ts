@@ -1,7 +1,7 @@
 import { ID, Query } from "appwrite";
 
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
-import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
+import { IUpdatePost, INewPost, INewUser, IUpdateUser, INewComment } from "@/types";
 
 // ============================================================
 // AUTH
@@ -540,6 +540,81 @@ export async function updateUser(user: IUpdateUser) {
     }
 
     return updatedUser;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export const getComments = async (postId: string) => {
+  console.log(appwriteConfig.commentCollectionId, postId);
+  console.log(appwriteConfig.databaseId);
+  try {
+    const comments = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.commentCollectionId,
+      [
+        Query.equal("posts", postId),
+        Query.orderDesc("$createdAt")
+      ],
+      // "$createdAt", 
+    );
+
+    if (!comments.documents) {
+      return [];
+    }
+
+    return comments.documents;
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return [];
+  }
+};
+export const createComment = async ({userId,postId,comment} : INewComment) => {
+  console.log(postId,comment)
+  try {
+    const comments = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.commentCollectionId,
+      ID.unique(),
+      {
+        users : userId,
+        posts : postId,
+        comment : comment,
+      }
+    )
+    if(!comments) throw Error;
+    return comments;
+  } catch (error) {
+    console.log(error);
+    throw Error;
+  }
+}
+
+export const likeComment = async ({commentId,userId,commentLikeArray,postId} : {commentId : string,userId : string,commentLikeArray: [],postId : string}) => {
+  console.log(commentId,userId,postId);
+  console.log(commentLikeArray);
+  let newArray = <Array<String>>[];
+  if(commentLikeArray.includes(userId)){
+    newArray = commentLikeArray.filter((id) => id != userId);
+    console.log('unlike')
+  }
+  else{
+    newArray = [...commentLikeArray,userId];
+    console.log('like')
+    console.log(newArray);
+    
+  }
+  try {
+    const updateComment = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.commentCollectionId,
+      commentId,
+      {
+        likesArray : [...newArray]
+      }
+    )
+    if(!updateComment) throw Error;
+    return updateComment;
   } catch (error) {
     console.log(error);
   }

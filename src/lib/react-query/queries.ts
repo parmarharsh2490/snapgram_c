@@ -25,8 +25,11 @@ import {
   searchPosts,
   savePost,
   deleteSavedPost,
+  createComment,
+  likeComment,
+  getComments,
 } from "@/lib/appwrite/api";
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
+import {  INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 
 // ============================================================
 // AUTH QUERIES
@@ -242,5 +245,131 @@ export const useUpdateUser = () => {
         queryKey: [QUERY_KEYS.GET_USER_BY_ID, data?.$id],
       });
     },
+  });
+};
+
+
+export const useCreateComments = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation(
+    ({ postId, comment, userId }: { postId: string; comment: string; userId: string }) => 
+      createComment({ postId, comment, userId }),
+    {
+      onMutate: async (newComment) => {
+        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+        await queryClient.cancelQueries(['getComments', newComment.postId]);
+        
+        // Snapshot the previous value
+        const previousComments = queryClient.getQueryData(['getComments', newComment.postId]);
+        
+        // Optimistically update to the new value
+        queryClient.setQueryData(['getComments', newComment.postId], (old: any) => [
+          {
+            ...newComment,
+            likesArray: [],
+            $id: Math.random().toString(),
+            users: queryClient.getQueryData([QUERY_KEYS.GET_CURRENT_USER]),
+            posts: queryClient.getQueryData([QUERY_KEYS.GET_POST_BY_ID, newComment.postId])
+          },
+          ...old,
+        ]);
+
+        // Return a context with the previous and new comment
+        return { previousComments };
+      },
+      onError: (err, newComment, context) => {
+        // Rollback to the previous value if the mutation fails
+        if (context?.previousComments) {
+          queryClient.setQueryData(['getComments', newComment.postId], context.previousComments);
+        }
+        console.error('Error creating comment:', err);
+        alert(`Error: ${(err as Error).message || 'An unknown error occurred'}`);
+      },
+      onSettled: (newComment) => {
+        // Invalidate the query to refetch the latest comments from the server
+        queryClient.invalidateQueries(['getComments', newComment?.postId]);
+      },
+      onSuccess: (newComment) => {
+        // Also invalidate on success to ensure data consistency
+        console.log(newComment);
+        queryClient.invalidateQueries(['getComments', newComment?.posts?.$id]);
+      },
+    }
+  );
+};
+
+
+interface LikeCommentParams {
+  commentId: string;
+  userId: string;
+  commentLikeArray: string[];
+  postId: string;
+}
+
+export const useLikeComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    ({ commentId, userId, commentLikeArray, postId }: LikeCommentParams) =>
+      likeComment({ commentId, userId, commentLikeArray, postId }),
+    {
+      onMutate: async (newLike: LikeCommentParams) => {
+        const { commentId, userId, postId } = newLike;
+        
+        console.log(commentId);
+        
+        // Get the current comments data from the query cache
+        const previousData = queryClient.getQueryData(['getComments', postId]);
+        console.log(previousData);
+
+        if (!previousData) return;
+
+        // Create a new data array with the updated like status
+        const newData = previousData.map(comment => {
+          if (comment.$id === commentId) {
+            const isLiked = comment.likesArray.includes(userId);
+            const newLikesArray = isLiked
+              ? comment.likesArray.filter(id => id !== userId)
+              : [...comment.likesArray, userId];
+
+            return {
+              ...comment,
+              likesArray: newLikesArray,
+            };
+          }
+          return comment;
+        });
+
+        console.log(newData);
+        
+        queryClient.setQueryData(['getComments', postId], newData);
+
+        return { previousData };
+      },
+      onError: (err, newLike, context) => {
+        // Roll back to the previous data on error
+        if (context?.previousData) {
+          queryClient.setQueryData(['getComments', newLike.postId], context.previousData);
+        }
+      },
+      onSettled: (newLike) => {
+        // Invalidate the query to refetch the comments data and ensure consistency
+        if (newLike) {
+          queryClient.invalidateQueries(['getComments', newLike.postId]);
+        }
+      }
+    }
+  );
+};
+
+
+
+export const useGetComments = (postId : string) => {
+  return useQuery({
+    queryKey: ['getComments', postId],
+    queryFn: () => getComments(postId),
+    enabled: !!postId,
+    keepPreviousData: true,
   });
 };

@@ -8,15 +8,32 @@ import {
   useGetPostById,
   useGetUserPosts,
   useDeletePost,
+  useDeleteSavedPost,
+  useSavePost,
+  useGetCurrentUser,
 } from "@/lib/react-query/queries";
 import { multiFormatDateString } from "@/lib/utils";
 import { useUserContext } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
+import { Models } from "appwrite";
+import Comments from "@/components/shared/Comments";
 
 const PostDetails = () => {
+  const { data: currentUser } = useGetCurrentUser();
+  const [isSaved, setIsSaved] = useState(false); 
+  const { mutate: savePost } = useSavePost();
+  const { mutate: deleteSavePost } = useDeleteSavedPost();
+ 
+
+  useEffect(() => {
+    setIsSaved(!!savedPostRecord);
+  }, [currentUser]);
+  
+  const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useUserContext();
-
+  
   const { data: post, isLoading } = useGetPostById(id);
   const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(
     post?.creator.$id
@@ -31,7 +48,23 @@ const PostDetails = () => {
     deletePost({ postId: id, imageId: post?.imageId });
     navigate(-1);
   };
+  const savedPostRecord = currentUser?.save.find(
+    (record: Models.Document) => record?.post?.$id === post?.$id
+  );
+  const handleSavePost = (
+    e: React.MouseEvent<HTMLImageElement, MouseEvent>
+  ) => {
+    e.stopPropagation();
 
+    if (savedPostRecord) {
+      setIsSaved(false);
+      return deleteSavePost(savedPostRecord.$id);
+    }
+    if(post){
+      savePost({ userId: user.id, postId: post.$id }); 
+    }
+    setIsSaved(true);
+  };
   return (
     <div className="post_details-container">
       <div className="hidden md:flex max-w-5xl w-full">
@@ -90,6 +123,14 @@ const PostDetails = () => {
               </Link>
 
               <div className="flex-center gap-4">
+              <img
+          src={isSaved ? "/assets/icons/saved.svg" : "/assets/icons/save.svg"}
+          alt="share"
+          width={24}
+          height={24}
+          className="cursor-pointer"
+          onClick={(e) => handleSavePost(e)}
+        />
                 <Link
                   to={`/update-post/${post?.$id}`}
                   className={`${user.id !== post?.creator.$id && "hidden"}`}>
@@ -100,7 +141,6 @@ const PostDetails = () => {
                     height={24}
                   />
                 </Link>
-
                 <Button
                   onClick={handleDeletePost}
                   variant="ghost"
@@ -130,10 +170,11 @@ const PostDetails = () => {
                   </li>
                 ))}
               </ul>
+              <PostStats post={post} userId={user.id} />
+              <Comments postId={post.$id}/>
             </div>
 
             <div className="w-full">
-              <PostStats post={post} userId={user.id} />
             </div>
           </div>
         </div>
@@ -150,6 +191,7 @@ const PostDetails = () => {
         ) : (
           <GridPostList posts={relatedPosts} />
         )}
+      
       </div>
     </div>
   );
