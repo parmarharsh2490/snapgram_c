@@ -13,9 +13,11 @@ import {
 type PostStatsProps = {
   post: Models.Document;
   userId: string;
+  showComments? : boolean;
+  setShowComments?: (showComments: boolean) => void;
 };
 
-const PostStats = ({ post, userId }: PostStatsProps) => {
+const PostStats = ({ post, userId,showComments,setShowComments }: PostStatsProps) => {
   const location = useLocation();
   const likesList = post.likes.map((user: Models.Document) => user.$id);
 
@@ -52,6 +54,10 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
     setLikes(likesArray);
     likePost({ postId: post.$id, likesArray });
   };
+
+  const handleShowComments = () => {  
+    setShowComments && setShowComments(!showComments);
+  }
 
   const handleSavePost = (
     e: React.MouseEvent<HTMLImageElement, MouseEvent>
@@ -104,6 +110,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
         <Link to={`/posts/${post.$id}`}>
         <img
           src="/assets/icons/comment.png"
+          onClick={handleShowComments}
           alt="share"
           width={20}
           height={20}

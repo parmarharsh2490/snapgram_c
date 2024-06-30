@@ -1,5 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
-
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui";
 import { Loader } from "@/components/shared";
 import { GridPostList, PostStats } from "@/components/shared";
@@ -17,23 +16,24 @@ import { useUserContext } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { Models } from "appwrite";
 import Comments from "@/components/shared/Comments";
+import SharePost from "@/components/shared/SharePost";
 
 const PostDetails = () => {
+  const currentUrl = window.location.href;
   const { data: currentUser } = useGetCurrentUser();
-  const [isSaved, setIsSaved] = useState(false); 
+  const [isSaved, setIsSaved] = useState(false);
   const { mutate: savePost } = useSavePost();
   const { mutate: deleteSavePost } = useDeleteSavedPost();
- 
 
   useEffect(() => {
     setIsSaved(!!savedPostRecord);
   }, [currentUser]);
-  
-  const [showComments, setShowComments] = useState(false);
+
+  const [showComments, setShowComments] = useState<boolean>(true);
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useUserContext();
-  
+
   const { data: post, isLoading } = useGetPostById(id);
   const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(
     post?.creator.$id
@@ -60,8 +60,8 @@ const PostDetails = () => {
       setIsSaved(false);
       return deleteSavePost(savedPostRecord.$id);
     }
-    if(post){
-      savePost({ userId: user.id, postId: post.$id }); 
+    if (post) {
+      savePost({ userId: user.id, postId: post.$id });
     }
     setIsSaved(true);
   };
@@ -123,14 +123,10 @@ const PostDetails = () => {
               </Link>
 
               <div className="flex-center gap-4">
-              <img
-          src={isSaved ? "/assets/icons/saved.svg" : "/assets/icons/save.svg"}
-          alt="share"
-          width={24}
-          height={24}
-          className="cursor-pointer"
-          onClick={(e) => handleSavePost(e)}
-        />
+                <SharePost
+                  title={`Hey, check out this amazing post by ${user.name} on Snapgram that i have found `}
+                  url={currentUrl}
+                />
                 <Link
                   to={`/update-post/${post?.$id}`}
                   className={`${user.id !== post?.creator.$id && "hidden"}`}>
@@ -156,6 +152,42 @@ const PostDetails = () => {
                 </Button>
               </div>
             </div>
+            {/* <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Share</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Share link</DialogTitle>
+          <DialogDescription>
+            Anyone who has this link will be able to view this.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center space-x-2">
+          <div className="grid flex-1 gap-2">
+            <Label htmlFor="link" className="sr-only">
+              Link
+            </Label>
+            <Input
+              id="link"
+              defaultValue="https://ui.shadcn.com/docs/installation"
+              readOnly
+            />
+          </div>
+          <Button type="submit" size="sm" className="px-3">
+            <span className="sr-only">Copy</span>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+        <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">
+              Close
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog> */}
 
             <hr className="border w-full border-dark-4/80" />
 
@@ -170,12 +202,16 @@ const PostDetails = () => {
                   </li>
                 ))}
               </ul>
-              <PostStats post={post} userId={user.id} />
-              <Comments postId={post.$id}/>
+              <PostStats
+                post={post}
+                userId={user.id}
+                showComments={showComments}
+                setShowComments={setShowComments}
+              />
+              <Comments postId={post.$id} showComments={showComments} />
             </div>
 
-            <div className="w-full">
-            </div>
+            <div className="w-full"></div>
           </div>
         </div>
       )}
@@ -191,7 +227,6 @@ const PostDetails = () => {
         ) : (
           <GridPostList posts={relatedPosts} />
         )}
-      
       </div>
     </div>
   );

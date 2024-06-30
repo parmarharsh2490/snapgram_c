@@ -226,7 +226,6 @@ export async function searchPosts(searchTerm: string) {
 
 export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
   const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
-
   if (pageParam) {
     queries.push(Query.cursorAfter(pageParam.toString()));
   }
@@ -378,7 +377,7 @@ export async function savePost(userId: string, postId: string) {
       appwriteConfig.savesCollectionId,
       ID.unique(),
       {
-        user: userId,
+        user : userId,
         post: postId,
       }
     );
@@ -546,8 +545,6 @@ export async function updateUser(user: IUpdateUser) {
 }
 
 export const getComments = async (postId: string) => {
-  console.log(appwriteConfig.commentCollectionId, postId);
-  console.log(appwriteConfig.databaseId);
   try {
     const comments = await databases.listDocuments(
       appwriteConfig.databaseId,
@@ -556,7 +553,6 @@ export const getComments = async (postId: string) => {
         Query.equal("posts", postId),
         Query.orderDesc("$createdAt")
       ],
-      // "$createdAt", 
     );
 
     if (!comments.documents) {
@@ -570,7 +566,6 @@ export const getComments = async (postId: string) => {
   }
 };
 export const createComment = async ({userId,postId,comment} : INewComment) => {
-  console.log(postId,comment)
   try {
     const comments = await databases.createDocument(
       appwriteConfig.databaseId,
@@ -591,18 +586,12 @@ export const createComment = async ({userId,postId,comment} : INewComment) => {
 }
 
 export const likeComment = async ({commentId,userId,commentLikeArray,postId} : {commentId : string,userId : string,commentLikeArray: [],postId : string}) => {
-  console.log(commentId,userId,postId);
-  console.log(commentLikeArray);
   let newArray = <Array<String>>[];
   if(commentLikeArray.includes(userId)){
     newArray = commentLikeArray.filter((id) => id != userId);
-    console.log('unlike')
   }
   else{
-    newArray = [...commentLikeArray,userId];
-    console.log('like')
-    console.log(newArray);
-    
+    newArray = [...commentLikeArray,userId];    
   }
   try {
     const updateComment = await databases.updateDocument(

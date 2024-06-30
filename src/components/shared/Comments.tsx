@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Button, Input } from "../ui";
 import { useCreateComments, useGetComments, useLikeComment } from "@/lib/react-query/queries";
 import { useUserContext } from "@/context/AuthContext";
@@ -11,14 +10,14 @@ import { Models } from "appwrite";
 
 interface CommentsProps {
   postId: string;
+  showComments: boolean;
 }
 
 interface FormData {
   comment: string;
 }
 
-const Comments = ({ postId }: CommentsProps) => {
-  const [showComment, setShowComment] = useState<boolean>(true);
+const Comments = ({ postId, showComments }: CommentsProps) => {
   const form = useForm<FormData>({
     resolver: zodResolver(CommentValidation),
     defaultValues: {
@@ -28,8 +27,6 @@ const Comments = ({ postId }: CommentsProps) => {
   
   const { user } = useUserContext();
   const { data: commentsList = [], isLoading } = useGetComments(postId);
-  console.log('comment');
-  console.log(commentsList);
   
   const { mutateAsync: likeComment } = useLikeComment();
   const { mutateAsync: createComment, isLoading: isCreatingComment } = useCreateComments();
@@ -39,7 +36,7 @@ const Comments = ({ postId }: CommentsProps) => {
       commentId: comment.$id,
       userId: user.id,
       commentLikeArray: comment.likesArray,
-      postId  :postId,
+      postId: postId,
     });
   };
   
@@ -55,11 +52,11 @@ const Comments = ({ postId }: CommentsProps) => {
       console.error('Error creating comment:', error);
     }
   };
+
   return (
-      <>
-       {
-        showComment && (
-          <>
+    <>
+      {showComments && (
+        <>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleCreate)} className="flex w-full items-center justify-center gap-3 my-4">
               <FormField
@@ -84,7 +81,7 @@ const Comments = ({ postId }: CommentsProps) => {
               </Button>
             </form>
           </Form>
-          <div key={postId} className="bg-dark-3 flex flex-col flex-1 overflow-scroll custom-scrollbar min-h-[10px] max-h-[200px] mt-3 gap-3 justify-start">
+          <div key={postId} className="bg-dark-3 flex flex-col overflow-y-auto custom-scrollbar max-h-[200px] mt-3 gap-3">
             {isLoading ? (
               <div className="flex items-center justify-center w-full">
                 <img src="/assets/icons/loader.svg" alt="Loading" width={25} height={25} />
@@ -93,11 +90,11 @@ const Comments = ({ postId }: CommentsProps) => {
               <h3 className="md:h3-bold text-center">No Comments</h3>
             ) : (
               commentsList.map((comment) => (
-                <div key={comment.$id} className="flex py-2 px-4 flex-1 items-center justify-between">
-                  <div key={comment.$id} className="flex items-center gap-3">
+                <div key={comment.$id} className="flex py-2 px-4 items-center justify-between">
+                  <div className="flex items-center gap-3">
                     <Link to={`/profile/${comment?.user?.$id}`} className="flex gap-2">
                       <img
-                        src={comment?.users?.imageUrl  || "/assets/images/profile.png"}
+                        src={comment?.users?.imageUrl || "/assets/images/profile.png"}
                         alt=""
                         height={24}
                         width={24}
@@ -129,10 +126,9 @@ const Comments = ({ postId }: CommentsProps) => {
             )}
           </div>
         </>
-        )
-       }
-      </>
-      )
+      )}
+    </>
+  );
 };
 
 export default Comments;
