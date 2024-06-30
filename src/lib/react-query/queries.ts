@@ -287,12 +287,9 @@ export const useCreateComments = () => {
         alert(`Error: ${(err as Error).message || 'An unknown error occurred'}`);
       },
       onSettled: (newComment) => {
-        // Invalidate the query to refetch the latest comments from the server
         queryClient.invalidateQueries(['getComments', newComment?.postId]);
       },
       onSuccess: (newComment) => {
-        // Also invalidate on success to ensure data consistency
-        console.log(newComment);
         queryClient.invalidateQueries(['getComments', newComment?.posts?.$id]);
       },
     }
@@ -317,12 +314,7 @@ export const useLikeComment = () => {
       onMutate: async (newLike: LikeCommentParams) => {
         const { commentId, userId, postId } = newLike;
         
-        console.log(commentId);
-        
-        // Get the current comments data from the query cache
         const previousData : Array<{}> | undefined = queryClient.getQueryData(['getComments', postId]);
-        console.log(previousData);
-
         if (!previousData) return;
 
         // Create a new data array with the updated like status
@@ -341,7 +333,6 @@ export const useLikeComment = () => {
           return comment;
         });
 
-        console.log(newData);
         
         queryClient.setQueryData(['getComments', postId], newData);
 
