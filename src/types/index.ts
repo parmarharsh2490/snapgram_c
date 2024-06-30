@@ -46,3 +46,10 @@ export type INewUser = {
   username: string;
   password: string;
 };
+
+export type IComment = {
+  comment: string;
+  postId: string;
+  userId: string;
+  commentLikesArray: string[];
+}

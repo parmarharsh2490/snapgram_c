@@ -1,5 +1,3 @@
-import React, { useState } from "react";
-import { Copy } from "lucide-react";
 import { FaFacebook, FaTwitter, FaLinkedin, FaTelegram, FaWhatsapp } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { FiCopy } from "react-icons/fi";
@@ -20,7 +18,6 @@ type SharePostProps = {
 };
 
 const SharePost = ({ url, title }: SharePostProps) => {
-  const [copySuccess, setCopySuccess] = useState(false);
   const {toast} = useToast()
 
   const shareUrls = {
@@ -34,8 +31,6 @@ const SharePost = ({ url, title }: SharePostProps) => {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(url);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000); // Reset success message after 2 seconds
       toast({
         title : 'Successfully copied'
       })
@@ -78,7 +73,7 @@ const SharePost = ({ url, title }: SharePostProps) => {
               className='px-3 shad-button_primary'
               onClick={copyToClipboard}
             >         
-            <FiCopy className="h-4 w-4 " />
+            <FiCopy className="h-4 w-4 "/>
             </Button>
           </div>
           <div className="flex space-x-2 mt-4">

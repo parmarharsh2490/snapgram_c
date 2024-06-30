@@ -311,8 +311,8 @@ export const useLikeComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation(
-    ({ commentId, userId, commentLikeArray, postId }: LikeCommentParams) =>
-      likeComment({ commentId, userId, commentLikeArray, postId }),
+    ({ commentId, userId, commentLikeArray }: LikeCommentParams) =>
+      likeComment({ commentId, userId, commentLikeArray }),
     {
       onMutate: async (newLike: LikeCommentParams) => {
         const { commentId, userId, postId } = newLike;
@@ -320,17 +320,17 @@ export const useLikeComment = () => {
         console.log(commentId);
         
         // Get the current comments data from the query cache
-        const previousData = queryClient.getQueryData(['getComments', postId]);
+        const previousData : Array<{}> | undefined = queryClient.getQueryData(['getComments', postId]);
         console.log(previousData);
 
         if (!previousData) return;
 
         // Create a new data array with the updated like status
-        const newData = previousData.map(comment => {
+        const newData  = previousData.map((comment : any) => {
           if (comment.$id === commentId) {
             const isLiked = comment.likesArray.includes(userId);
             const newLikesArray = isLiked
-              ? comment.likesArray.filter(id => id !== userId)
+              ? comment.likesArray.filter((id : string) => id !== userId)
               : [...comment.likesArray, userId];
 
             return {
@@ -347,7 +347,7 @@ export const useLikeComment = () => {
 
         return { previousData };
       },
-      onError: (err, newLike, context) => {
+      onError: ( newLike : LikeCommentParams, context : any) => {
         // Roll back to the previous data on error
         if (context?.previousData) {
           queryClient.setQueryData(['getComments', newLike.postId], context.previousData);

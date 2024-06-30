@@ -36,7 +36,7 @@ const Comments = ({ postId, showComments }: CommentsProps) => {
       commentId: comment.$id,
       userId: user.id,
       commentLikeArray: comment.likesArray,
-      postId: postId,
+      postId : postId
     });
   };
   

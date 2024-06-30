@@ -1,7 +1,7 @@
 import { ID, Query } from "appwrite";
 
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
-import { IUpdatePost, INewPost, INewUser, IUpdateUser, INewComment } from "@/types";
+import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
 
 // ============================================================
 // AUTH
@@ -565,7 +565,7 @@ export const getComments = async (postId: string) => {
     return [];
   }
 };
-export const createComment = async ({userId,postId,comment} : INewComment) => {
+export const createComment = async ({userId,postId,comment} : {userId : string,postId : string,comment : string}) => {
   try {
     const comments = await databases.createDocument(
       appwriteConfig.databaseId,
@@ -585,7 +585,7 @@ export const createComment = async ({userId,postId,comment} : INewComment) => {
   }
 }
 
-export const likeComment = async ({commentId,userId,commentLikeArray,postId} : {commentId : string,userId : string,commentLikeArray: [],postId : string}) => {
+export const likeComment = async ({commentId,userId,commentLikeArray} : {commentId : string,userId : string,commentLikeArray: Array<String>}) => {
   let newArray = <Array<String>>[];
   if(commentLikeArray.includes(userId)){
     newArray = commentLikeArray.filter((id) => id != userId);
