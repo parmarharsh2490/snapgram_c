@@ -69,7 +69,7 @@ const PostDetails = () => {
                 className="flex items-center gap-3">
                 <img
                   src={
-                    post?.creator.imageUrl ||
+                    post?.creator?.imageUrl ||
                     "/assets/icons/profile-placeholder.svg"
                   }
                   alt="creator"
