@@ -22,11 +22,11 @@ const PostDetails = () => {
 
   const { data: post, isLoading } = useGetPostById(id);
   const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(
-    post?.creator.$id
+    post?.creator?.$id
   );
   const { mutate: deletePost } = useDeletePost();
 
-  const relatedPosts = userPosts?.documents.filter(
+  const relatedPosts = userPosts?.documents?.filter(
     (userPost) => userPost.$id !== id
   );
 
@@ -65,7 +65,7 @@ const PostDetails = () => {
           <div className="post_details-info">
             <div className="flex-between w-full">
               <Link
-                to={`/profile/${post?.creator.$id}`}
+                to={`/profile/${post?.creator?.$id || ""}`}
                 className="flex items-center gap-3">
                 <img
                   src={
@@ -93,11 +93,11 @@ const PostDetails = () => {
 
               <div className="flex-center gap-4">
                 <SharePost
-                  title={`Hey, check out this amazing post by ${user.name} on Snapgram that i have found `}
+                  title={`Hey, check out this amazing post by ${user?.name} on Snapgram that i have found `}
                   url={currentUrl}
                 />
                 <Link
-                  to={`/update-post/${post?.$id}`}
+                  to={`/update-post/${post?.$id || ""}`}
                   className={`${user.id !== post?.creator.$id && "hidden"}`}>
                   <img
                     src={"/assets/icons/edit.svg"}
